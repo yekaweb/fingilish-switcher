@@ -1,0 +1,27 @@
+# Build results
+bin/
+obj/
+publish/
+publish_light/
+dist/
+
+# Visual Studio / Rider
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs & temp
+*.log
+crash.log
+debug.log
+vazirmatn.zip
+vazirmatn/
+
+# OS metadata
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
