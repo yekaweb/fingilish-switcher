@@ -24,7 +24,7 @@ namespace FingilishSwitcher
 
         public static uint WM_SHOW_MAIN_WINDOW { get; private set; }
 
-        public TrayApplicationContext()
+        public TrayApplicationContext(bool isSilentStartup = false)
         {
             // Register inter-process message for single instance activation
             WM_SHOW_MAIN_WINDOW = NativeMethods.RegisterWindowMessage("FINGILISH_SWITCHER_SHOW_WINDOW_MSG");
@@ -101,8 +101,11 @@ namespace FingilishSwitcher
             _messageFilter = new ActivationMessageFilter(WM_SHOW_MAIN_WINDOW, ShowDashboard);
             Application.AddMessageFilter(_messageFilter);
 
-            // Show dashboard on first direct interactive start
-            ShowDashboard();
+            // Show dashboard on first direct interactive start (suppressed when launched on boot)
+            if (!isSilentStartup)
+            {
+                ShowDashboard();
+            }
         }
 
         private void BuildContextMenu()
@@ -254,7 +257,7 @@ namespace FingilishSwitcher
         private void ShowAbout()
         {
             MessageBox.Show(
-                "⚡ نرم‌افزار Fingilish Switcher Industrial Edition\nنسخه ۱.۲.۰\n\n" +
+                "⚡ نرم‌افزار Fingilish Switcher Industrial Edition\nنسخه ۱.۳.۰\n\n" +
                 "تبدیل هوشمند دوطرفه متون اشتباه تایپ‌شده بین کیبورد فارسی و انگلیسی.\n\n" +
                 "• آیکون بازطراحی‌شده صنعتی و مدرن\n" +
                 "• تایپوگرافی اصیل وزیر متن (Vazirmatn)\n" +

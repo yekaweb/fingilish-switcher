@@ -33,7 +33,7 @@ namespace FingilishSwitcher
                 if (enable)
                 {
                     string exePath = Application.ExecutablePath;
-                    key.SetValue(AppName, $"\"{exePath}\"");
+                    key.SetValue(AppName, $"\"{exePath}\" --startup");
                 }
                 else
                 {

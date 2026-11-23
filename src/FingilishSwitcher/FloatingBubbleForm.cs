@@ -20,16 +20,19 @@ namespace FingilishSwitcher
             StartPosition = FormStartPosition.Manual;
             ShowInTaskbar = false;
             TopMost = true;
-            Size = new Size(34, 30);
-            BackColor = Color.FromArgb(15, 23, 42); // Deep slate
+            Size = new Size(36, 30);
+            BackColor = Color.FromArgb(15, 23, 42); // Deep slate #0F172A
             Cursor = Cursors.Hand;
             DoubleBuffered = true;
 
-            _autoHideTimer = new System.Windows.Forms.Timer { Interval = 3200 };
+            // Force native handle creation on the UI thread
+            var _ = Handle;
+
+            _autoHideTimer = new System.Windows.Forms.Timer { Interval = 3500 };
             _autoHideTimer.Tick += (s, e) =>
             {
                 _autoHideTimer.Stop();
-                Hide();
+                HideBubble();
             };
         }
 
@@ -38,9 +41,9 @@ namespace FingilishSwitcher
             get
             {
                 var cp = base.CreateParams;
-                // WS_EX_TOOLWINDOW (does not show in Alt-Tab)
-                // WS_EX_NOACTIVATE (prevent stealing focus)
-                // WS_EX_TOPMOST
+                // WS_EX_TOOLWINDOW: Hide from Alt-Tab
+                // WS_EX_NOACTIVATE: Never steal focus from active text editor
+                // WS_EX_TOPMOST: Stay on top of other windows
                 cp.ExStyle |= NativeMethods.WS_EX_TOOLWINDOW | NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOPMOST;
                 return cp;
             }
@@ -48,7 +51,7 @@ namespace FingilishSwitcher
 
         protected override void WndProc(ref Message m)
         {
-            // CRITICAL: Intercept WM_MOUSEACTIVATE to completely prevent Windows from activating this window on click!
+            // Intercept WM_MOUSEACTIVATE to strictly prevent Windows from activating this window on click!
             if (m.Msg == NativeMethods.WM_MOUSEACTIVATE)
             {
                 m.Result = (IntPtr)NativeMethods.MA_NOACTIVATE;
@@ -59,26 +62,53 @@ namespace FingilishSwitcher
 
         public void ShowAt(int x, int y, IntPtr targetWindow)
         {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => ShowAt(x, y, targetWindow)));
+                return;
+            }
+
             _targetWindow = targetWindow;
 
-            // Keep within screen bounds
+            // Keep within current monitor working area
             var screen = Screen.FromPoint(new Point(x, y)).WorkingArea;
-            int posX = Math.Min(x, screen.Right - Width - 10);
-            int posY = Math.Max(screen.Top + 10, Math.Min(y, screen.Bottom - Height - 10));
+            int posX = Math.Max(screen.Left + 5, Math.Min(x, screen.Right - Width - 10));
+            int posY = Math.Max(screen.Top + 5, Math.Min(y, screen.Bottom - Height - 10));
 
-            Location = new Point(posX, posY);
-            if (!Visible)
-                Show();
+            // Set position and show without stealing focus
+            NativeMethods.SetWindowPos(
+                Handle,
+                NativeMethods.HWND_TOPMOST,
+                posX,
+                posY,
+                Width,
+                Height,
+                NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW
+            );
+            NativeMethods.ShowWindow(Handle, NativeMethods.SW_SHOWNOACTIVATE);
+            Visible = true;
 
             _autoHideTimer.Stop();
             _autoHideTimer.Start();
             Invalidate();
         }
 
+        public void HideBubble()
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(HideBubble));
+                return;
+            }
+
+            _autoHideTimer.Stop();
+            NativeMethods.ShowWindow(Handle, NativeMethods.SW_HIDE);
+            Visible = false;
+        }
+
         public new void Hide()
         {
-            _autoHideTimer.Stop();
-            base.Hide();
+            HideBubble();
         }
 
         protected override void OnMouseEnter(EventArgs e)
@@ -103,7 +133,7 @@ namespace FingilishSwitcher
             if (e.Button == MouseButtons.Left)
             {
                 IntPtr target = _targetWindow;
-                Hide();
+                HideBubble();
                 _onTriggerConvert?.Invoke(target);
             }
         }
@@ -114,7 +144,7 @@ namespace FingilishSwitcher
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            // Rounded rectangle
+            // Rounded rectangle container
             var rect = new Rectangle(1, 1, Width - 3, Height - 3);
 
             Color bg = _isHovered ? Color.FromArgb(30, 41, 59) : Color.FromArgb(15, 23, 42);
@@ -123,15 +153,15 @@ namespace FingilishSwitcher
                 g.FillRectangle(brush, rect);
             }
 
-            // 1px subtle technical border
-            Color borderColor = _isHovered ? Color.FromArgb(56, 189, 248) : Color.FromArgb(51, 65, 85);
+            // High-contrast clean border
+            Color borderColor = _isHovered ? Color.FromArgb(56, 189, 248) : Color.FromArgb(71, 85, 105);
             using (var pen = new Pen(borderColor, 1.2f))
             {
                 g.DrawRectangle(pen, rect);
             }
 
             // Draw technical swap icon
-            using (var font = new Font("Segoe UI", 10f, FontStyle.Bold))
+            using (var font = new Font("Segoe UI", 11f, FontStyle.Bold))
             using (var brush = new SolidBrush(_isHovered ? Color.FromArgb(56, 189, 248) : Color.FromArgb(226, 232, 240)))
             using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
             {

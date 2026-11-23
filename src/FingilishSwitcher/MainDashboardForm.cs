@@ -111,7 +111,7 @@ namespace FingilishSwitcher
 
             var lblSubtitle = new Label
             {
-                Text = "سامانه صنعتی و هوشمند تبدیل دوطرفه کیبورد فارسی و انگلیسی • نسخه ۱.۲.۰",
+                Text = "سامانه صنعتی و هوشمند تبدیل دوطرفه کیبورد فارسی و انگلیسی • نسخه ۱.۳.۰",
                 Font = FontManager.GetVazir(8.5f, FontStyle.Regular),
                 ForeColor = Color.FromArgb(148, 163, 184),
                 Location = new Point(15, 34),

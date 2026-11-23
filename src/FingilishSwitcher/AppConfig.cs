@@ -51,6 +51,12 @@ namespace FingilishSwitcher
                     var config = JsonSerializer.Deserialize<AppConfig>(json);
                     if (config != null)
                     {
+                        if (config.Hotkey == Keys.Space || config.Hotkey == Keys.None)
+                        {
+                            config.Hotkey = Keys.F;
+                            config.Control = true;
+                            config.Shift = true;
+                        }
                         Current = config;
                         return;
                     }

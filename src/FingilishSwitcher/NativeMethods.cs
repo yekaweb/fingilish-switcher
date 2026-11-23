@@ -20,11 +20,7 @@ namespace FingilishSwitcher
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
-        // SendInput constants & structs
-        public const int INPUT_KEYBOARD = 1;
-        public const uint KEYEVENTF_KEYUP = 0x0002;
-        public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
-
+        // Virtual keys
         public const ushort VK_SHIFT = 0x10;
         public const ushort VK_CONTROL = 0x11;
         public const ushort VK_MENU = 0x12; // Alt
@@ -32,6 +28,25 @@ namespace FingilishSwitcher
         public const ushort VK_RWIN = 0x5C;
         public const ushort VK_C = 0x43;
         public const ushort VK_V = 0x56;
+
+        public const uint KEYEVENTF_KEYUP = 0x0002;
+        public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
+
+        // Correct 64-bit aligned Win32 INPUT structures (40 bytes on x64)
+        public const int INPUT_MOUSE = 0;
+        public const int INPUT_KEYBOARD = 1;
+        public const int INPUT_HARDWARE = 2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MOUSEINPUT
+        {
+            public int dx;
+            public int dy;
+            public uint mouseData;
+            public uint dwFlags;
+            public uint time;
+            public IntPtr dwExtraInfo;
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct KEYBDINPUT
@@ -43,11 +58,20 @@ namespace FingilishSwitcher
             public IntPtr dwExtraInfo;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct HARDWAREINPUT
+        {
+            public uint uMsg;
+            public ushort wParamL;
+            public ushort wParamH;
+        }
+
         [StructLayout(LayoutKind.Explicit)]
         public struct INPUT_UNION
         {
-            [FieldOffset(0)]
-            public KEYBDINPUT ki;
+            [FieldOffset(0)] public MOUSEINPUT mi;
+            [FieldOffset(0)] public KEYBDINPUT ki;
+            [FieldOffset(0)] public HARDWAREINPUT hi;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -68,6 +92,37 @@ namespace FingilishSwitcher
 
         [DllImport("user32.dll")]
         public static extern uint GetClipboardSequenceNumber();
+
+        // Win32 Native Clipboard APIs (Thread & Apartment independent)
+        public const uint CF_UNICODETEXT = 13;
+        public const uint GMEM_MOVEABLE = 0x0002;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool OpenClipboard(IntPtr hWndNewOwner);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool CloseClipboard();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool EmptyClipboard();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr GetClipboardData(uint uFormat);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool IsClipboardFormatAvailable(uint format);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GlobalAlloc(uint uFlags, UIntPtr dwBytes);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr GlobalLock(IntPtr hMem);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GlobalUnlock(IntPtr hMem);
 
         // Mouse Hook constants
         public const int WH_MOUSE_LL = 14;
@@ -116,6 +171,21 @@ namespace FingilishSwitcher
         public const int WM_MOUSEACTIVATE = 0x0021;
         public const int MA_NOACTIVATE = 3;
 
+        // Window positioning & visibility without activation
+        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        public const uint SWP_NOSIZE = 0x0001;
+        public const uint SWP_NOMOVE = 0x0002;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_SHOWWINDOW = 0x0040;
+        public const int SW_SHOWNOACTIVATE = 4;
+        public const int SW_HIDE = 0;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetCursorPos(out POINT lpPoint);
@@ -132,23 +202,6 @@ namespace FingilishSwitcher
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
-
-        // Cursor check
-        [StructLayout(LayoutKind.Sequential)]
-        public struct CURSORINFO
-        {
-            public int cbSize;
-            public int flags;
-            public IntPtr hCursor;
-            public POINT ptScreenPos;
-        }
-
-        [DllImport("user32.dll")]
-        public static extern bool GetCursorInfo(out CURSORINFO pci);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr LoadCursor(IntPtr hInstance, int lpCursorName);
-        public const int IDC_IBEAM = 32513;
 
         // Custom activation message across processes
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]

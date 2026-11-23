@@ -28,6 +28,23 @@ namespace FingilishSwitcher
             uint vk = (uint)config.Hotkey;
 
             _isRegistered = NativeMethods.RegisterHotKey(Handle, HOTKEY_ID, modifiers, vk);
+
+            // If registration failed and it's not already default Ctrl + Shift + F, fall back to Ctrl + Shift + F
+            if (!_isRegistered && (config.Hotkey != Keys.F || !config.Control || !config.Shift))
+            {
+                uint fallbackModifiers = NativeMethods.MOD_NOREPEAT | NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT;
+                _isRegistered = NativeMethods.RegisterHotKey(Handle, HOTKEY_ID, fallbackModifiers, (uint)Keys.F);
+                if (_isRegistered)
+                {
+                    config.Control = true;
+                    config.Shift = true;
+                    config.Alt = false;
+                    config.Win = false;
+                    config.Hotkey = Keys.F;
+                    ConfigManager.Save();
+                }
+            }
+
             return _isRegistered;
         }
 

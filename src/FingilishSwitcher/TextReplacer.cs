@@ -1,8 +1,8 @@
 using System;
+using System.Media;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace FingilishSwitcher
 {
@@ -17,29 +17,41 @@ namespace FingilishSwitcher
         {
             try
             {
-                // Ensure target window is in foreground if provided
+                // Ensure target window is foreground
                 if (targetWindow.HasValue && targetWindow.Value != IntPtr.Zero)
                 {
                     IntPtr currentFg = NativeMethods.GetForegroundWindow();
                     if (currentFg != targetWindow.Value)
                     {
                         NativeMethods.SetForegroundWindow(targetWindow.Value);
-                        await Task.Delay(30);
+                        await Task.Delay(40);
                     }
                 }
 
-                // 1. Force release any physical modifiers that user might still be holding (Ctrl, Shift, Alt, Win)
-                ReleasePhysicalModifiers();
-                await Task.Delay(25);
+                // Wait for user to release physical modifiers (Ctrl, Shift, Alt, Win)
+                // When user presses Ctrl+Shift+F, their fingers are physically down on the keyboard.
+                // If we simulate Ctrl+C while Shift is physically held down, Windows sees Ctrl+Shift+C!
+                for (int waitMod = 0; waitMod < 20; waitMod++)
+                {
+                    bool ctrlDown = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_CONTROL) & 0x8000) != 0;
+                    bool shiftDown = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_SHIFT) & 0x8000) != 0;
+                    bool altDown = (NativeMethods.GetAsyncKeyState(NativeMethods.VK_MENU) & 0x8000) != 0;
+                    if (!ctrlDown && !shiftDown && !altDown)
+                        break;
+                    await Task.Delay(15);
+                }
 
-                // 2. Track clipboard sequence number
+                ReleasePhysicalModifiers();
+                await Task.Delay(20);
+
+                // Track clipboard sequence number
                 uint seqBefore = NativeMethods.GetClipboardSequenceNumber();
 
-                // 3. Send Ctrl+C
+                // Send Ctrl+C
                 SendCtrlC();
 
-                // 4. Wait for clipboard sequence to change or text to appear
-                for (int i = 0; i < 18; i++)
+                // Wait for clipboard to update or timeout (up to 300ms)
+                for (int i = 0; i < 20; i++)
                 {
                     await Task.Delay(15);
                     if (NativeMethods.GetClipboardSequenceNumber() != seqBefore)
@@ -48,15 +60,13 @@ namespace FingilishSwitcher
                     }
                 }
 
-                // Small grace period
-                await Task.Delay(15);
+                await Task.Delay(20);
 
-                // 5. Read selected text with safe retry
-                string? selectedText = TryGetClipboardText();
+                // Read selected text using pure Win32 API (STA-independent)
+                string? selectedText = Win32Clipboard.GetText();
 
                 if (string.IsNullOrEmpty(selectedText))
                 {
-                    System.Diagnostics.Debug.WriteLine("No text copied or selection empty.");
                     return;
                 }
 
@@ -90,25 +100,30 @@ namespace FingilishSwitcher
                     }
                 }
 
-                // 6. Set replacement text to clipboard with safe retry
-                if (!TrySetClipboardText(replacementText))
+                // Set replacement text onto clipboard
+                if (!Win32Clipboard.SetText(replacementText))
                 {
                     await Task.Delay(25);
-                    TrySetClipboardText(replacementText);
+                    Win32Clipboard.SetText(replacementText);
                 }
 
-                await Task.Delay(25);
+                await Task.Delay(30);
 
-                // 7. Ensure modifiers are still released before sending Ctrl+V
+                // Release modifiers once more before Ctrl+V
                 ReleasePhysicalModifiers();
-                await Task.Delay(15);
+                await Task.Delay(20);
 
-                // 8. Send Ctrl+V to paste over selection
+                // Send Ctrl+V
                 SendCtrlV();
 
                 // Record in history & increment count
                 HistoryManager.IncrementTotal();
                 HistoryManager.Add(selectedText, replacementText, isPersianDominant);
+
+                if (ConfigManager.Current.PlayNotificationSound)
+                {
+                    try { SystemSounds.Asterisk.Play(); } catch { }
+                }
             }
             catch (Exception ex)
             {
@@ -118,7 +133,6 @@ namespace FingilishSwitcher
 
         private static void ReleasePhysicalModifiers()
         {
-            // Send KeyUp for all modifier keys to prevent modifier bleeding (e.g. Shift+C instead of Ctrl+C)
             NativeMethods.keybd_event((byte)NativeMethods.VK_SHIFT, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
             NativeMethods.keybd_event((byte)NativeMethods.VK_MENU, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
@@ -128,86 +142,24 @@ namespace FingilishSwitcher
 
         private static void SendCtrlC()
         {
-            var inputs = new NativeMethods.INPUT[4];
+            NativeMethods.keybd_event((byte)NativeMethods.VK_SHIFT, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_MENU, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
 
-            // Ctrl down
-            inputs[0].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[0].u.ki.wVk = NativeMethods.VK_CONTROL;
-
-            // C down
-            inputs[1].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[1].u.ki.wVk = NativeMethods.VK_C;
-
-            // C up
-            inputs[2].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[2].u.ki.wVk = NativeMethods.VK_C;
-            inputs[2].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
-
-            // Ctrl up
-            inputs[3].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[3].u.ki.wVk = NativeMethods.VK_CONTROL;
-            inputs[3].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
-
-            NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
+            NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_C, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_C, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
         }
 
         private static void SendCtrlV()
         {
-            var inputs = new NativeMethods.INPUT[4];
+            NativeMethods.keybd_event((byte)NativeMethods.VK_SHIFT, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_MENU, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
 
-            // Ctrl down
-            inputs[0].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[0].u.ki.wVk = NativeMethods.VK_CONTROL;
-
-            // V down
-            inputs[1].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[1].u.ki.wVk = NativeMethods.VK_V;
-
-            // V up
-            inputs[2].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[2].u.ki.wVk = NativeMethods.VK_V;
-            inputs[2].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
-
-            // Ctrl up
-            inputs[3].type = NativeMethods.INPUT_KEYBOARD;
-            inputs[3].u.ki.wVk = NativeMethods.VK_CONTROL;
-            inputs[3].u.ki.dwFlags = NativeMethods.KEYEVENTF_KEYUP;
-
-            NativeMethods.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(NativeMethods.INPUT)));
-        }
-
-        private static string? TryGetClipboardText()
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                try
-                {
-                    if (Clipboard.ContainsText())
-                        return Clipboard.GetText();
-                }
-                catch
-                {
-                    Thread.Sleep(15);
-                }
-            }
-            return null;
-        }
-
-        private static bool TrySetClipboardText(string text)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                try
-                {
-                    Clipboard.SetText(text);
-                    return true;
-                }
-                catch
-                {
-                    Thread.Sleep(15);
-                }
-            }
-            return false;
+            NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_V, 0, 0, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_V, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
+            NativeMethods.keybd_event((byte)NativeMethods.VK_CONTROL, 0, NativeMethods.KEYEVENTF_KEYUP, UIntPtr.Zero);
         }
     }
 }
