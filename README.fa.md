@@ -16,6 +16,8 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20(x64)-38bdf8.svg)](https://github.com/yekaweb/fingilish-switcher)
 [![Languages](https://img.shields.io/badge/languages-FA%20%7C%20EN%20%7C%20RU%20%7C%20ES%20%7C%20KO-10b981.svg)](https://github.com/yekaweb/fingilish-switcher)
 [![Tests](https://img.shields.io/badge/tests-43%20passed-22c55e.svg)](https://github.com/yekaweb/fingilish-switcher)
+[![Microsoft Defender](https://img.shields.io/badge/Microsoft%20Defender-تایید%20امنیت%20(۰%20تهدید)-10b981.svg)](SECURITY.md)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-گزارش%20سلامت%20فایل-22c55e.svg)](https://www.virustotal.com/gui/file/35dc2ca2c766844023a5c5f34015f4cd23f6753684efa3809400007bb507bcc3)
 [![License](https://img.shields.io/badge/license-MIT-slate.svg)](https://github.com/yekaweb/fingilish-switcher/blob/main/inno/license.txt)
 
 <p align="center">
@@ -69,7 +71,17 @@ dotnet run --project tests/FingilishTests
 
 ---
 
-## ۵. لایسنس
+## ۵. امنیت، حریم خصوصی و تاییدیه آنتی‌ویروس 🛡️
+
+* **آنتی‌ویروس مایکروسافت دیفندر (Microsoft Defender):** تایید سلامت کامل با ۰ تهدید (`0 threats found`).
+* **اسکن چندموتوره VirusTotal:** [مشاهده گزارش زنده VirusTotal](https://www.virustotal.com/gui/file/35dc2ca2c766844023a5c5f34015f4cd23f6753684efa3809400007bb507bcc3).
+* **کد اصالت سنجی (SHA-256):**
+  `35DC2CA2C766844023A5C5F34015F4CD23F6753684EFA3809400007BB507BCC3`
+* جهت مطالعه سیاست حریم خصوصی ۱۰۰٪ آفلاین و عدم ثبت کلیدها، سند [SECURITY.md](SECURITY.md) را مطالعه نمایید.
+
+---
+
+## ۶. لایسنس
 
 این پروژه تحت مجوز [MIT](inno/license.txt) منتشر شده و استفاده از آن برای اهداف شخصی و تجاری کاملاً آزاد و رایگان است.
 

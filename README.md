@@ -14,6 +14,8 @@
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011%20(x64)-38bdf8.svg)](https://github.com/yekaweb/fingilish-switcher)
 [![Languages](https://img.shields.io/badge/languages-EN%20%7C%20FA%20%7C%20RU%20%7C%20ES%20%7C%20KO-10b981.svg)](https://github.com/yekaweb/fingilish-switcher)
 [![Tests](https://img.shields.io/badge/tests-43%20passed-22c55e.svg)](https://github.com/yekaweb/fingilish-switcher)
+[![Microsoft Defender](https://img.shields.io/badge/Microsoft%20Defender-Clean%20(0%20Threats)-10b981.svg)](SECURITY.md)
+[![VirusTotal](https://img.shields.io/badge/VirusTotal-Verified%20Clean-22c55e.svg)](https://www.virustotal.com/gui/file/35dc2ca2c766844023a5c5f34015f4cd23f6753684efa3809400007bb507bcc3)
 [![License](https://img.shields.io/badge/license-MIT-slate.svg)](https://github.com/yekaweb/fingilish-switcher/blob/main/inno/license.txt)
 
 <p align="center">
@@ -72,6 +74,16 @@ dotnet run --project tests/FingilishTests
 
 ---
 
-## 5. License
+## 5. Security & Antivirus Verification 🛡️
+
+* **Microsoft Defender Antivirus:** Verified 100% Clean (`0 threats found`).
+* **VirusTotal:** [Public Multi-Engine Analysis Report](https://www.virustotal.com/gui/file/35dc2ca2c766844023a5c5f34015f4cd23f6753684efa3809400007bb507bcc3).
+* **SHA-256 Checksum (`FingilishSwitcher_Setup_v1.5.0.exe`):**
+  `35DC2CA2C766844023A5C5F34015F4CD23F6753684EFA3809400007BB507BCC3`
+* Read our full [SECURITY.md](SECURITY.md) for privacy policy and zero-telemetry architecture.
+
+---
+
+## 6. License
 
 Released under the [MIT License](inno/license.txt) — completely free and open-source for personal and commercial use.
