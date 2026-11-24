@@ -131,6 +131,13 @@ namespace FingilishSwitcher
                             historyDirection = "RU ➔ EN";
                             _lastTargetCode = "en";
                         }
+                        else if (script == ScriptType.Korean)
+                        {
+                            // Korean -> English
+                            replacementText = HangulAutomaton.Decompose(selectedText);
+                            historyDirection = "KO ➔ EN";
+                            _lastTargetCode = "en";
+                        }
                         else
                         {
                             // Latin text -> choose appropriate target from installed locales

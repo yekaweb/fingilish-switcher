@@ -148,9 +148,41 @@ namespace FingilishTests
             AssertEqual("Detect Cyrillic script", MultiKeyboardMapper.DetectScript("привет").ToString(), "Cyrillic");
             AssertEqual("Detect PersianArabic script", MultiKeyboardMapper.DetectScript("سلام دنیا").ToString(), "PersianArabic");
             AssertEqual("Detect Latin script", MultiKeyboardMapper.DetectScript("Hello world").ToString(), "Latin");
+            AssertEqual("Detect Korean script", MultiKeyboardMapper.DetectScript("한국어 사랑").ToString(), "Korean");
 
             // -------------------------------------------------------------
-            // SECTION 6: Multi-Way Cycle Morphing
+            // SECTION 6: Korean 2-Set Hangul Automaton Tests
+            // -------------------------------------------------------------
+            // Test 14: Basic syllable "rk" -> "가"
+            AssertEqual("Korean basic: rk -> 가", HangulAutomaton.Compose("rk"), "가");
+            AssertEqual("Korean reverse: 가 -> rk", HangulAutomaton.Decompose("가"), "rk");
+
+            // Test 15: Syllable with batchim "gks" -> "한"
+            AssertEqual("Korean batchim: gks -> 한", HangulAutomaton.Compose("gks"), "한");
+            AssertEqual("Korean reverse: 한 -> gks", HangulAutomaton.Decompose("한"), "gks");
+
+            // Test 16: Multi-syllable word "gksrnr" -> "한국"
+            AssertEqual("Korean word: gksrnr -> 한국", HangulAutomaton.Compose("gksrnr"), "한국");
+            AssertEqual("Korean reverse: 한국 -> gksrnr", HangulAutomaton.Decompose("한국"), "gksrnr");
+
+            // Test 17: Korean "한글" (gksrmf)
+            AssertEqual("Korean word: gksrmf -> 한글", HangulAutomaton.Compose("gksrmf"), "한글");
+            AssertEqual("Korean reverse: 한글 -> gksrmf", HangulAutomaton.Decompose("한글"), "gksrmf");
+
+            // Test 18: Korean "사랑" (tkfkd)
+            AssertEqual("Korean word: tkfkd -> 사랑", HangulAutomaton.Compose("tkfkd"), "사랑");
+            AssertEqual("Korean reverse: 사랑 -> tkfkd", HangulAutomaton.Decompose("사랑"), "tkfkd");
+
+            // Test 19: Batchim transfer to next vowel "gksl" (하 + 니 -> 하니)
+            AssertEqual("Korean batchim transfer: gksl -> 하니", HangulAutomaton.Compose("gksl"), "하니");
+            AssertEqual("Korean word: gksdl -> 한이", HangulAutomaton.Compose("gksdl"), "한이");
+
+            // Test 20: Universal MultiKeyboardMapper with Korean
+            AssertEqual("MultiKeyboardMapper: gksrnr -> 한국", MultiKeyboardMapper.Convert("gksrnr", "ko"), "한국");
+            AssertEqual("MultiKeyboardMapper: 한국 -> gksrnr", MultiKeyboardMapper.Convert("한국", "en"), "gksrnr");
+
+            // -------------------------------------------------------------
+            // SECTION 7: Multi-Way Cycle Morphing
             // -------------------------------------------------------------
             var mockLocales = new List<InstalledLocale>
             {

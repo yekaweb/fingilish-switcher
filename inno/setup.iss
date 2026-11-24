@@ -1,6 +1,6 @@
-; Inno Setup Script for Fingilish Switcher Polyglot Edition v1.4.0
+; Inno Setup Script for Fingilish Switcher Polyglot & Hangul Edition v1.5.0
 #define MyAppName "Fingilish Switcher"
-#define MyAppVersion "1.4.0"
+#define MyAppVersion "1.5.0"
 #define MyAppPublisher "Fingilish"
 #define MyAppExeName "FingilishSwitcher.exe"
 
@@ -15,7 +15,7 @@ AllowNoIcons=yes
 LicenseFile=d:\Fingilish\inno\license.txt
 InfoBeforeFile=d:\Fingilish\inno\info.txt
 OutputDir=d:\Fingilish\installer
-OutputBaseFilename=FingilishSwitcher_Setup_v1.4.0
+OutputBaseFilename=FingilishSwitcher_Setup_v1.5.0
 SetupIconFile=d:\Fingilish\src\FingilishSwitcher\app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -23,7 +23,7 @@ WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequiredOverridesAllowed=commandline dialog
 UninstallDisplayIcon={app}\{#MyAppExeName}
-UninstallDisplayName={#MyAppName} Polyglot Edition (نسخه ۱.۴.۰)
+UninstallDisplayName={#MyAppName} Polyglot & Hangul Edition (نسخه ۱.۵.۰)
 CloseApplications=force
 
 [Languages]

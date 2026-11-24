@@ -7,12 +7,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>1.4.0</Version>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
-    <FileVersion>1.4.0.0</FileVersion>
-    <Title>Fingilish Switcher (Polyglot Engine)</Title>
+    <Version>1.5.0</Version>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
+    <FileVersion>1.5.0.0</FileVersion>
+    <Title>Fingilish Switcher (Polyglot &amp; Hangul Edition)</Title>
     <Product>Fingilish Switcher</Product>
-    <Description>سامانه چندزبانه و هوشمند تبدیل آنی متون اشتباه تایپ‌شده بین کیبورد فارسی، انگلیسی، روسی و اسپانیایی در ویندوز</Description>
+    <Description>سامانه چندزبانه و هوشمند تبدیل آنی متون اشتباه تایپ‌شده بین کیبورد فارسی، انگلیسی، روسی، کره‌ای و اسپانیایی در ویندوز</Description>
   </PropertyGroup>
 
   <ItemGroup>

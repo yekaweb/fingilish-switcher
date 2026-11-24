@@ -180,6 +180,9 @@ namespace FingilishSwitcher
             return sb.ToString();
         }
 
+        public static string EnglishToKorean(string text) => HangulAutomaton.Compose(text);
+        public static string KoreanToEnglish(string text) => HangulAutomaton.Decompose(text);
+
         /// <summary>
         /// Converts the given text to English Latin from any supported non-Latin script.
         /// </summary>
@@ -190,6 +193,7 @@ namespace FingilishSwitcher
             {
                 ScriptType.PersianArabic => KeyboardMapper.PersianToEnglish(text, faLayout),
                 ScriptType.Cyrillic => RussianToEnglish(text),
+                ScriptType.Korean => HangulAutomaton.Decompose(text),
                 ScriptType.Latin => SpanishToEnglish(text),
                 _ => text
             };
@@ -205,6 +209,7 @@ namespace FingilishSwitcher
                 "fa" or "per" or "fas" => KeyboardMapper.EnglishToPersian(text, faLayout),
                 "ru" or "rus" => EnglishToRussian(text),
                 "es" or "spa" => EnglishToSpanish(text),
+                "ko" or "kor" => HangulAutomaton.Compose(text),
                 _ => text
             };
         }
