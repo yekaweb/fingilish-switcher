@@ -1,7 +1,6 @@
 using System;
+using System.Linq;
 using System.Media;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace FingilishSwitcher
@@ -10,6 +9,7 @@ namespace FingilishSwitcher
     {
         private static string? _lastOriginalText = null;
         private static string? _lastConvertedText = null;
+        private static string? _lastTargetCode = null;
         private static DateTime _lastConvertedTime = DateTime.MinValue;
         private static readonly object _syncLock = new();
 
@@ -71,25 +71,82 @@ namespace FingilishSwitcher
                 }
 
                 string replacementText;
-                bool isPersianDominant = KeyboardMapper.IsPersianDominant(selectedText);
+                string historyDirection = "EN ➔ FA";
 
                 lock (_syncLock)
                 {
                     var now = DateTime.Now;
-                    if (ConfigManager.Current.EnableUndo &&
-                        _lastConvertedText != null &&
+                    var installedLocales = LocaleManager.GetInstalledLocales();
+
+                    // Check for rapid Multi-Way Cycle Morphing (within 3.5 seconds)
+                    if (_lastConvertedText != null &&
                         _lastOriginalText != null &&
                         selectedText == _lastConvertedText &&
-                        (now - _lastConvertedTime).TotalSeconds < 25)
+                        (now - _lastConvertedTime).TotalSeconds < 3.5 &&
+                        installedLocales.Count > 2)
+                    {
+                        // Cycle to next installed locale
+                        replacementText = MultiKeyboardMapper.CycleConvert(
+                            _lastOriginalText,
+                            installedLocales,
+                            ref _lastTargetCode!,
+                            out string nextBadge,
+                            ConfigManager.Current.LayoutType
+                        );
+
+                        historyDirection = $"Cycle ➔ {nextBadge}";
+                        _lastConvertedText = replacementText;
+                        _lastConvertedTime = now;
+                    }
+                    // Check for Undo (between 3.5s and 25s)
+                    else if (ConfigManager.Current.EnableUndo &&
+                             _lastConvertedText != null &&
+                             _lastOriginalText != null &&
+                             selectedText == _lastConvertedText &&
+                             (now - _lastConvertedTime).TotalSeconds < 25)
                     {
                         // Undo action
                         replacementText = _lastOriginalText;
+                        historyDirection = "Undo ↺";
                         _lastConvertedText = null;
                         _lastOriginalText = null;
+                        _lastTargetCode = null;
                     }
                     else
                     {
-                        replacementText = KeyboardMapper.Convert(selectedText, ConfigManager.Current.LayoutType);
+                        // Fresh conversion: auto-detect current script
+                        var script = MultiKeyboardMapper.DetectScript(selectedText);
+
+                        if (script == ScriptType.PersianArabic)
+                        {
+                            // Persian -> English
+                            replacementText = KeyboardMapper.PersianToEnglish(selectedText, ConfigManager.Current.LayoutType);
+                            historyDirection = "FA ➔ EN";
+                            _lastTargetCode = "en";
+                        }
+                        else if (script == ScriptType.Cyrillic)
+                        {
+                            // Russian -> English
+                            replacementText = MultiKeyboardMapper.RussianToEnglish(selectedText);
+                            historyDirection = "RU ➔ EN";
+                            _lastTargetCode = "en";
+                        }
+                        else
+                        {
+                            // Latin text -> choose appropriate target from installed locales
+                            // Priority: Persian if installed, otherwise first non-English installed locale
+                            string target = "fa";
+                            if (!installedLocales.Any(x => x.Code == "fa"))
+                            {
+                                var nonEn = installedLocales.FirstOrDefault(x => x.Code != "en");
+                                if (nonEn != null)
+                                    target = nonEn.Code;
+                            }
+
+                            replacementText = MultiKeyboardMapper.Convert(selectedText, target, ConfigManager.Current.LayoutType);
+                            historyDirection = $"EN ➔ {target.ToUpperInvariant()}";
+                            _lastTargetCode = target;
+                        }
 
                         if (replacementText == selectedText)
                             return;
@@ -118,7 +175,7 @@ namespace FingilishSwitcher
 
                 // Record in history & increment count
                 HistoryManager.IncrementTotal();
-                HistoryManager.Add(selectedText, replacementText, isPersianDominant);
+                HistoryManager.Add(selectedText, replacementText, historyDirection);
 
                 if (ConfigManager.Current.PlayNotificationSound)
                 {

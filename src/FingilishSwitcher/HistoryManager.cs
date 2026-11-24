@@ -21,6 +21,11 @@ namespace FingilishSwitcher
 
         public static void Add(string source, string converted, bool wasPersianDominant)
         {
+            Add(source, converted, wasPersianDominant ? "FA ➔ EN" : "EN ➔ FA");
+        }
+
+        public static void Add(string source, string converted, string direction)
+        {
             if (string.IsNullOrWhiteSpace(source) || source == converted)
                 return;
 
@@ -31,7 +36,7 @@ namespace FingilishSwitcher
                     Timestamp = DateTime.Now,
                     SourceText = source,
                     ConvertedText = converted,
-                    Direction = wasPersianDominant ? "FA ➔ EN" : "EN ➔ FA"
+                    Direction = direction
                 });
 
                 if (_records.Count > MaxRecords)

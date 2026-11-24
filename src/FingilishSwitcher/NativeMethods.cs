@@ -211,5 +211,18 @@ namespace FingilishSwitcher
         public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
         public const int HWND_BROADCAST = 0xFFFF;
+
+        // Dynamic Win32 Keyboard Layout Enumeration
+        public const int WM_INPUTLANGCHANGE = 0x0051;
+        public const int WM_INPUTLANGCHANGEREQUEST = 0x0050;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern int GetKeyboardLayoutList(int nBuff, [Out] IntPtr[]? lpList);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetKeyboardLayout(uint idThread);
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
     }
 }

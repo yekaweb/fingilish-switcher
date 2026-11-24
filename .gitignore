@@ -18,6 +18,9 @@ crash.log
 debug.log
 vazirmatn.zip
 vazirmatn/
+*.rar
+*.zip
+installer/*.exe
 
 # OS metadata
 Thumbs.db
